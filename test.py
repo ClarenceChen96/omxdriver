@@ -1,22 +1,66 @@
 from connection_manager import MQManager
 import sqlite3
 from task import DisplayTask, MonitorTask
-from db_manager import LocalDB
+from db_manager import LocalDB, Pandas_Manager
 import yaml
 import json
 from error_manager import Error_Handler
 import pika
 
+#read json file and put into sql database
+# with open('net_task.json') as f:
+#     fileData = []
+#     for line in f:
+#         fileData.append(line)
+#
+# db = LocalDB('db/task.db')
+# for data in fileData:
+#     print(data)
+#     data = json.loads(json.loads(data))
+#     if data['messageType'] == 'putinto-task':
+#         task = DisplayTask(taskType = data['messageType'], planId = data['content']['putintoTask']['planId'],
+#                     materialName = data['content']['putintoTask']['materialName'], materialId = data['content']['putintoTask']['materialId'],
+#                     materialType = data['content']['putintoTask']['materialType'], videoDuration = data['content']['putintoTask']['videoDuration'],
+#                     url = data['content']['putintoTask']['url'], height = data['content']['putintoTask']['height'],
+#                     width = data['content']['putintoTask']['width'], upTime = data['content']['putintoTask']['upTime'],
+#                     downTime = data['content']['putintoTask']['upTime'], isMonitor = data['content']['putintoTask']['isMonitor'],
+#                     upMonitor = 0, dailyMonitor= 0, downMonitor = 0, pointId = data['content']['putintoTask']['pointId'],
+#                     taskId = data['content']['putintoTask']['taskId'], playSchedule = data['content']['putintoTask']['playSchedule'],
+#                     mac = data['content']['putintoTask']['equipmentMac'], monitorPeriod = 0,
+#                     monitorFrequency = 0)
+#         db.execute("""INSERT INTO displaytask VALUES(
+#                     :taskType, :materialName, :materialId, :planId, :materialType, :videoDuration, :url, :height, :width, :upTime, :downTime, :isMonitor, :upMonitor,
+#                     :dailyMonitor, :downMonitor, :pointId, :taskId, :playSchedule, :mac, :monitorPeriod, :monitorFrequency)
+#                     """, task.getTaskDict())
+#
+#     if data['messageType'] == 'monitor-task':
+#         if data['content']['monitorTask']['monitorType'] in (1,2):
+#             task = MonitorTask(messageType = data['messageType'], monitorType = data['content']['monitorTask']['monitorType'],
+#                                monitorId = data['content']['monitorTask']['monitorId'], pointId = data['content']['monitorTask']['pointId'],
+#                                taskId = data['content']['monitorTask']['taskId'])
+#         elif data['content']['monitorTask']['monitorType'] == 3:
+#             task = MonitorTask(messageType=data['messageType'], monitorType=data['content']['monitorTask']['monitorType'],
+#                                monitorId=data['content']['monitorTask']['monitorId'], pointId=data['content']['monitorTask']['pointId'],
+#                                taskId=data['content']['monitorTask']['taskId'], monitorPeriod = data['content']['monitorTask']['monitorPeriod'],
+#                                monitorFrequency = data['content']['monitorTask']['monitorRate'])
+#
+#         db.execute("""INSERT INTO monitortask VALUES(
+#                     :messageType, :monitorType, :monitorId, :pointId, :taskId, :monitorPeriod, :monitorFrequency)
+#                     """, task.getTaskDict())
+#         task.execute(db)
+
+#read json and write into csv file
 with open('net_task.json') as f:
     fileData = []
     for line in f:
         fileData.append(line)
 
-db = LocalDB('db/task.db')
+db = Pandas_Manager()
 for data in fileData:
-    print(data)
+    # print(data)
     data = json.loads(json.loads(data))
     if data['messageType'] == 'putinto-task':
+        localFp =
         task = DisplayTask(taskType = data['messageType'], planId = data['content']['putintoTask']['planId'],
                     materialName = data['content']['putintoTask']['materialName'], materialId = data['content']['putintoTask']['materialId'],
                     materialType = data['content']['putintoTask']['materialType'], videoDuration = data['content']['putintoTask']['videoDuration'],
@@ -27,10 +71,7 @@ for data in fileData:
                     taskId = data['content']['putintoTask']['taskId'], playSchedule = data['content']['putintoTask']['playSchedule'],
                     mac = data['content']['putintoTask']['equipmentMac'], monitorPeriod = 0,
                     monitorFrequency = 0)
-        db.execute("""INSERT INTO displaytask VALUES(
-                    :taskType, :materialName, :materialId, :planId, :materialType, :videoDuration, :url, :height, :width, :upTime, :downTime, :isMonitor, :upMonitor,
-                    :dailyMonitor, :downMonitor, :pointId, :taskId, :playSchedule, :mac, :monitorPeriod, :monitorFrequency)
-                    """, task.getTaskDict())
+        db.write(data['messageType'],task.getTaskDict())
 
     if data['messageType'] == 'monitor-task':
         if data['content']['monitorTask']['monitorType'] in (1,2):
@@ -43,10 +84,24 @@ for data in fileData:
                                taskId=data['content']['monitorTask']['taskId'], monitorPeriod = data['content']['monitorTask']['monitorPeriod'],
                                monitorFrequency = data['content']['monitorTask']['monitorRate'])
 
-        db.execute("""INSERT INTO monitortask VALUES(
-                    :messageType, :monitorType, :monitorId, :pointId, :taskId, :monitorPeriod, :monitorFrequency)
-                    """, task.getTaskDict())
+        db.write(data['messageType'], task.getTaskDict())
+        task.execute(db)
 
+
+
+
+# with open('net_task.json') as f:
+#     fileData = []
+#     for line in f:
+#         fileData.append(line)
+#
+# db = Pandas_Manager()
+# data = fileData[1]
+# data = json.loads(json.loads(data))
+# task = MonitorTask(messageType = data['messageType'], monitorType = data['content']['monitorTask']['monitorType'],
+#                    monitorId = data['content']['monitorTask']['monitorId'], pointId = data['content']['monitorTask']['pointId'],
+#                    taskId = data['content']['monitorTask']['taskId'])
+# task.execute(db)
 
 
 

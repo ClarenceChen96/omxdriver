@@ -66,7 +66,7 @@ if __name__ == '__main__':
     root.bind("<Return>", exit)
 
     args = {}
-    args['video_dir'] = 'ADVideo'
+    args['video_dir'] = 'video'
     root.after(1, main(args))
     root.mainloop()
     root = tkinter.Tk()

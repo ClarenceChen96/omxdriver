@@ -21,5 +21,8 @@ class Error_Handler():
     def display_message(self, message):
         raise NotImplementedError
 
+    def net_report(self):
+        raise NotImplementedError
+
 
 

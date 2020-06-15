@@ -4,6 +4,8 @@ import requests
 import json
 import os
 from error_manager import Error_Handler
+from task import DisplayTask, MonitorTask
+from db_manager import LocalDB
 import sqlite3
 
 
@@ -52,31 +54,68 @@ class MQManager():
         '''
         this method is the call back when a message from MQ is received.
         Do somgthing about the received message
-        :ch
-        :param method:
-        :param properties:
-        :param body:
-        :return:
+        :param ch: channel
+        :param method: caller method
+        :param properties:I don't know what this is
+        :param body: body of the received message
+        :return:no return, just execute tasks
         '''
         #convert message received into a dictionary file
+        db = LocalDB('db/task.db')
         data = json.loads(body.decode('utf-8'))
-        print(data)
+        if data['messageType'] == 'putinto-task':
+            task = DisplayTask(taskType=data['messageType'], planId=data['content']['putintoTask']['planId'],
+                               materialName=data['content']['putintoTask']['materialName'],
+                               materialId=data['content']['putintoTask']['materialId'],
+                               materialType=data['content']['putintoTask']['materialType'],
+                               videoDuration=data['content']['putintoTask']['videoDuration'],
+                               url=data['content']['putintoTask']['url'],
+                               height=data['content']['putintoTask']['height'],
+                               width=data['content']['putintoTask']['width'],
+                               upTime=data['content']['putintoTask']['upTime'],
+                               downTime=data['content']['putintoTask']['upTime'],
+                               isMonitor=data['content']['putintoTask']['isMonitor'],
+                               upMonitor=0, dailyMonitor=0, downMonitor=0,
+                               pointId=data['content']['putintoTask']['pointId'],
+                               taskId=data['content']['putintoTask']['taskId'],
+                               playSchedule=data['content']['putintoTask']['playSchedule'],
+                               mac=data['content']['putintoTask']['equipmentMac'], monitorPeriod=0,
+                               monitorFrequency=0)
+            db.execute("""INSERT INTO displaytask VALUES(
+                        :taskType, :materialName, :materialId, :planId, :materialType, :videoDuration, :url, :height, :width, :upTime, :downTime, :isMonitor, :upMonitor,
+                        :dailyMonitor, :downMonitor, :pointId, :taskId, :playSchedule, :mac, :monitorPeriod, :monitorFrequency)
+                        """, task.getTaskDict())
 
-        #loop through the received messages and execute these commands
-        for item in data:
-            for task in item['content']:
-                raise NotImplementedError
+        if data['messageType'] == 'monitor-task':
+            if data['content']['monitorTask']['monitorType'] in (1, 2):
+                task = MonitorTask(messageType=data['messageType'],
+                                   monitorType=data['content']['monitorTask']['monitorType'],
+                                   monitorId=data['content']['monitorTask']['monitorId'],
+                                   pointId=data['content']['monitorTask']['pointId'],
+                                   taskId=data['content']['monitorTask']['taskId'])
+            elif data['content']['monitorTask']['monitorType'] == 3:
+                task = MonitorTask(messageType=data['messageType'],
+                                   monitorType=data['content']['monitorTask']['monitorType'],
+                                   monitorId=data['content']['monitorTask']['monitorId'],
+                                   pointId=data['content']['monitorTask']['pointId'],
+                                   taskId=data['content']['monitorTask']['taskId'],
+                                   monitorPeriod=data['content']['monitorTask']['monitorPeriod'],
+                                   monitorFrequency=data['content']['monitorTask']['monitorRate'])
+
+            db.execute("""INSERT INTO monitortask VALUES(
+                        :messageType, :monitorType, :monitorId, :pointId, :taskId, :monitorPeriod, :monitorFrequency)
+                        """, task.getTaskDict())
 
 
 
-        #now change file settings and restart the program
-
-        self.error_handler.graceful_restart()
-
-
-        with open("mqresult.txt", 'a') as f:
-            f.write(body.decode("utf-8"))
-        print(body)
+        # #now change file settings and restart the program
+        # self.error_handler.net_report()
+        # self.error_handler.graceful_restart()
+        #
+        #
+        # with open("mqresult.txt", 'a') as f:
+        #     f.write(body.decode("utf-8"))
+        # print(body)
 
 
     def getMacAddress(self):
@@ -155,59 +194,5 @@ class MQManager():
 # print(result)
 
 
-class USBMonitor():
-    def __init__(self):
-        raise NotImplementedError
 
-    def monitor(self):
-        raise NotImplementedError
-
-    def callback(self):
-        # convert message received into a dictionary
-        data = json.loads(body.decode('utf-8'))
-        print(data)
-
-        # loop through the received messages and execute these commands
-        for plan in data:
-            for t in plan['tasks']:
-                monitor = t['monitorType'].split(',')
-                if '1' in monitor:
-                    upMonitor = 1
-                else:
-                    upMonitor = 0
-
-                if '2' in monitor:
-                    dailyMonitor = 1
-                else:
-                    dailyMonitor = 0
-
-                if '3' in monitor:
-                    downMonitor = 1
-                else:
-                    downMonitor = 0
-
-                task = Task(materialName=plan['materialName'], planId=plan['planId'], url=plan['url'],
-                            upTime=t['upTime'], downTime=t['downTime'], isMonitor=t['isMonitor'],
-                            upMonitor=upMonitor, dailyMonitor=dailyMonitor, downMonitor=downMonitor,
-                            taskType=t['taskType'], pointId=t['pointId'], playSchedule=t['playSchedule'],
-                            taskId=t['taskId'], mac=t['mac'], monitorPeriod=t['monitorPeriod'],
-                            monitorRate=t['monitorRate'])
-
-                # save loaded command into database
-                db.execute("""INSERT INTO localtask VALUES(
-                                      :materialName, :planId, :url, :upTime, :downTime, :isMonitor, :upMonitor, :dailyMonitor, 
-                                      :downMonitor, :taskType, :taskType, :pointId, :playSchedule, :mac, :monitorPeriod, :monitorRate)
-                                    """, task.getTaskDict())
-
-                # execute task
-                task.execute(self)
-
-        # now change file settings and restart the program
-
-        self.error_handler.graceful_restart()
-
-        raise NotImplementedError
-
-    def copy(self):
-        raise NotImplementedError
 
