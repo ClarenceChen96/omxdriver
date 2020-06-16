@@ -155,7 +155,7 @@ class Pandas_Manager():
                 columns=["taskType", "materialName", "materialId", "planId", "materialType", "videoDuration",
                          "url", "height", "width", "upTime", "downTime", "isMonitor", "upMonitor", "dailyMonitor",
                          "downMonitor", "pointId", "taskId", "playSchedule", "mac", "monitorPeriod",
-                         "monitorFrequency", 'localFilePath'])
+                         "monitorFrequency", "localFilePath"])
             '''write to disk'''
             displaytaskdf.to_csv(self.displayfp, index=False)
 
@@ -186,15 +186,17 @@ class Pandas_Manager():
             except IndexError:
                 self.error_handler.report_issue('''no match found in database, ignored''')
                 return False
-            '''check if it is a single match. if so, change value accordingly'''
+            '''check if it is a single match. if so, change value accordingly
+            if multiple match and multi row set to true, also do the same
+             otherwise ignore and report issue'''
             if isinstance(index, int64):
                 self.displaytask._set_value(index, col, val)
                 self.displaytask.to_csv(self.displayfp)
-            '''if multiple matches found, and multi-row set to True, perform multi-row operations'''
             elif multi_row:
                 self.displaytask._set_value(index, col, val)
                 self.displaytask.to_csv(self.displayfp)
-            '''otherwise ignore and report issue'''
+
+
             else:
                 logging.error('multiple rows selected for modification, but multi-row is not set to True')
                 self.error_handler.report_issue('''multiple matches found in database but ''')

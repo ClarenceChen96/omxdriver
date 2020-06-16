@@ -5,7 +5,7 @@ import json
 import os
 from error_manager import Error_Handler
 from task import DisplayTask, MonitorTask
-from db_manager import LocalDB
+from db_manager import Pandas_Manager
 import sqlite3
 
 
@@ -20,12 +20,13 @@ class MQManager():
         :param dict: arguments for initiating the class
         :param log_manager: log manager object for the class to use
         '''
-
+        '''load settings'''
+        self.dict = dict
         #read the yml settings file
         with open('application-dev.yml') as f:
             var = yaml.load(f, Loader=yaml.SafeLoader)
 
-        #setting the variables
+        '''setting the variables'''
         self.host_name = var['rabbitmq']['host']
         self.port = var['rabbitmq']['port']
         self.user_name = var['rabbitmq']['username']
@@ -38,17 +39,23 @@ class MQManager():
         self.routing_key = self.MAC_Address + '-routingKey'
         self.error_handler = Error_Handler('MQ_handler')
 
+        #initiate db object
+        self.db = Pandas_Manager()
+
     def monitor(self):
-        #connect to MQ server, and then start monitoring. This should be called in its own thread
+        '''connect to MQ server, and then start monitoring. This should be called in its own thread'''
         self.credentials = pika.PlainCredentials(self.user_name, self.password)
         self.parameters = pika.ConnectionParameters(host = self.host_name, port = self.port, virtual_host='/', credentials = self.credentials)
-        self.connection = pika.BlockingConnection(self.parameters)
+        self.connection = pika.SelectConnection(self.parameters)
         self.channel = self.connection.channel()
         self.channel.basic_consume(queue = self.queue_name, on_message_callback = self.callback, auto_ack= True)
 
 
-        #start monitoring MQ server
-        self.channel.start_consuming()
+        '''start monitoring MQ server'''
+        try:
+            self.channel.start_consuming()
+        except pika.exceptions.StreamLostError:
+            return False
 
     def callback(self, ch, method, properties, body):
         '''
@@ -60,10 +67,10 @@ class MQManager():
         :param body: body of the received message
         :return:no return, just execute tasks
         '''
-        #convert message received into a dictionary file
-        db = LocalDB('db/task.db')
+        '''convert message received into a dictionary file'''
         data = json.loads(body.decode('utf-8'))
         if data['messageType'] == 'putinto-task':
+            localFp = self.dict['video_dir']
             task = DisplayTask(taskType=data['messageType'], planId=data['content']['putintoTask']['planId'],
                                materialName=data['content']['putintoTask']['materialName'],
                                materialId=data['content']['putintoTask']['materialId'],
@@ -80,11 +87,10 @@ class MQManager():
                                taskId=data['content']['putintoTask']['taskId'],
                                playSchedule=data['content']['putintoTask']['playSchedule'],
                                mac=data['content']['putintoTask']['equipmentMac'], monitorPeriod=0,
-                               monitorFrequency=0)
-            db.execute("""INSERT INTO displaytask VALUES(
-                        :taskType, :materialName, :materialId, :planId, :materialType, :videoDuration, :url, :height, :width, :upTime, :downTime, :isMonitor, :upMonitor,
-                        :dailyMonitor, :downMonitor, :pointId, :taskId, :playSchedule, :mac, :monitorPeriod, :monitorFrequency)
-                        """, task.getTaskDict())
+                               monitorFrequency=0,
+                               localFilePath=(localFp + data['content']['putintoTask']['materialName']))
+            self.db.write(data['messageType'], task.getTaskDict())
+            task.execute(self)
 
         if data['messageType'] == 'monitor-task':
             if data['content']['monitorTask']['monitorType'] in (1, 2):
@@ -102,9 +108,8 @@ class MQManager():
                                    monitorPeriod=data['content']['monitorTask']['monitorPeriod'],
                                    monitorFrequency=data['content']['monitorTask']['monitorRate'])
 
-            db.execute("""INSERT INTO monitortask VALUES(
-                        :messageType, :monitorType, :monitorId, :pointId, :taskId, :monitorPeriod, :monitorFrequency)
-                        """, task.getTaskDict())
+            self.db.write(data['messageType'], task.getTaskDict())
+            task.execute(self.db)
 
 
 
@@ -126,7 +131,7 @@ class MQManager():
         MAC_Address = ':'.join(("%012X" % uuid.getnode())[i:i+2] for i in range(0, 12, 2))
         return MAC_Address
 
-    def download(url, fileName):
+    def download(self, url, fileName):
         '''
         this method downloads a file and implements resume function by using a loop until done
         :param fileName: file-name to store the downloaded file
@@ -135,7 +140,7 @@ class MQManager():
         attempts = 0
         header = requests.head(url)
         fileLength = int(header.headers['Content-Length'])
-        fileName ='video/'+fileName
+        fileName =self.dict['video_dir']+fileName
         while attempts < 10:
             if os.path.exists(fileName):
                 if fileLength == os.path.getsize(fileName):

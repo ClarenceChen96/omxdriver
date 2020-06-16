@@ -116,3 +116,26 @@ Traceback (most recent call last):
 TimeoutError: [Errno 60] Operation timed out
 pika.adapters.base_connection - $(levelname)s - connection_lost: StreamLostError: ("Stream connection lost: TimeoutError(60, 'Operation timed out')",)
 pika.adapters.blocking_connection - $(levelname)s - Unexpected connection close detected: StreamLostError: ("Stream connection lost: TimeoutError(60, 'Operation timed out')",)
+pika.adapters.utils.io_services_utils - $(levelname)s - _AsyncBaseTransport._consume() failed, aborting connection: error=TimeoutError(60, 'Operation timed out'); sock=<socket.socket fd=9, family=AddressFamily.AF_INET, type=SocketKind.SOCK_STREAM, proto=6, laddr=('192.168.1.124', 58900)>; Caller's stack:
+Traceback (most recent call last):
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 1041, in _on_socket_readable
+    self._consume()
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 791, in _consume
+    data = self._sigint_safe_recv(self._sock, self._MAX_RECV_BYTES)
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 79, in retry_sigint_wrap
+    return func(*args, **kwargs)
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 846, in _sigint_safe_recv
+    return sock.recv(max_bytes)
+TimeoutError: [Errno 60] Operation timed out
+Traceback (most recent call last):
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 1041, in _on_socket_readable
+    self._consume()
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 791, in _consume
+    data = self._sigint_safe_recv(self._sock, self._MAX_RECV_BYTES)
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 79, in retry_sigint_wrap
+    return func(*args, **kwargs)
+  File "/Users/yuhengchen/opt/anaconda3/lib/python3.7/site-packages/pika/adapters/utils/io_services_utils.py", line 846, in _sigint_safe_recv
+    return sock.recv(max_bytes)
+TimeoutError: [Errno 60] Operation timed out
+pika.adapters.base_connection - $(levelname)s - connection_lost: StreamLostError: ("Stream connection lost: TimeoutError(60, 'Operation timed out')",)
+pika.adapters.blocking_connection - $(levelname)s - Unexpected connection close detected: StreamLostError: ("Stream connection lost: TimeoutError(60, 'Operation timed out')",)

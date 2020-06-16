@@ -7,6 +7,10 @@ import json
 from error_manager import Error_Handler
 import pika
 
+
+
+
+
 #read json file and put into sql database
 # with open('net_task.json') as f:
 #     fileData = []
@@ -50,42 +54,47 @@ import pika
 #         task.execute(db)
 
 #read json and write into csv file
-with open('net_task.json') as f:
-    fileData = []
-    for line in f:
-        fileData.append(line)
-
-db = Pandas_Manager()
-for data in fileData:
-    # print(data)
-    data = json.loads(json.loads(data))
-    if data['messageType'] == 'putinto-task':
-        localFp =
-        task = DisplayTask(taskType = data['messageType'], planId = data['content']['putintoTask']['planId'],
-                    materialName = data['content']['putintoTask']['materialName'], materialId = data['content']['putintoTask']['materialId'],
-                    materialType = data['content']['putintoTask']['materialType'], videoDuration = data['content']['putintoTask']['videoDuration'],
-                    url = data['content']['putintoTask']['url'], height = data['content']['putintoTask']['height'],
-                    width = data['content']['putintoTask']['width'], upTime = data['content']['putintoTask']['upTime'],
-                    downTime = data['content']['putintoTask']['upTime'], isMonitor = data['content']['putintoTask']['isMonitor'],
-                    upMonitor = 0, dailyMonitor= 0, downMonitor = 0, pointId = data['content']['putintoTask']['pointId'],
-                    taskId = data['content']['putintoTask']['taskId'], playSchedule = data['content']['putintoTask']['playSchedule'],
-                    mac = data['content']['putintoTask']['equipmentMac'], monitorPeriod = 0,
-                    monitorFrequency = 0)
-        db.write(data['messageType'],task.getTaskDict())
-
-    if data['messageType'] == 'monitor-task':
-        if data['content']['monitorTask']['monitorType'] in (1,2):
-            task = MonitorTask(messageType = data['messageType'], monitorType = data['content']['monitorTask']['monitorType'],
-                               monitorId = data['content']['monitorTask']['monitorId'], pointId = data['content']['monitorTask']['pointId'],
-                               taskId = data['content']['monitorTask']['taskId'])
-        elif data['content']['monitorTask']['monitorType'] == 3:
-            task = MonitorTask(messageType=data['messageType'], monitorType=data['content']['monitorTask']['monitorType'],
-                               monitorId=data['content']['monitorTask']['monitorId'], pointId=data['content']['monitorTask']['pointId'],
-                               taskId=data['content']['monitorTask']['taskId'], monitorPeriod = data['content']['monitorTask']['monitorPeriod'],
-                               monitorFrequency = data['content']['monitorTask']['monitorRate'])
-
-        db.write(data['messageType'], task.getTaskDict())
-        task.execute(db)
+# dict = {}
+# dict['video_dir'] = 'video/'
+#
+# with open('net_task.json') as f:
+#     fileData = []
+#     for line in f:
+#         fileData.append(line)
+#
+# db = Pandas_Manager()
+# for data in fileData:
+#     # print(data)
+#     data = json.loads(json.loads(data))
+#     if data['messageType'] == 'putinto-task':
+#         localFp = dict['video_dir']
+#         task = DisplayTask(taskType = data['messageType'], planId = data['content']['putintoTask']['planId'],
+#                     materialName = data['content']['putintoTask']['materialName'], materialId = data['content']['putintoTask']['materialId'],
+#                     materialType = data['content']['putintoTask']['materialType'], videoDuration = data['content']['putintoTask']['videoDuration'],
+#                     url = data['content']['putintoTask']['url'], height = data['content']['putintoTask']['height'],
+#                     width = data['content']['putintoTask']['width'], upTime = data['content']['putintoTask']['upTime'],
+#                     downTime = data['content']['putintoTask']['upTime'], isMonitor = data['content']['putintoTask']['isMonitor'],
+#                     upMonitor = 0, dailyMonitor= 0, downMonitor = 0, pointId = data['content']['putintoTask']['pointId'],
+#                     taskId = data['content']['putintoTask']['taskId'], playSchedule = data['content']['putintoTask']['playSchedule'],
+#                     mac = data['content']['putintoTask']['equipmentMac'], monitorPeriod = 0,
+#                     monitorFrequency = 0, localFilePath = (dict['video_dir']+data['content']['putintoTask']['materialName']))
+#         db.write(data['messageType'],task.getTaskDict())
+#         mq = MQManager(dict)
+#         task.execute(mq)
+#
+#     if data['messageType'] == 'monitor-task':
+#         if data['content']['monitorTask']['monitorType'] in (1,2):
+#             task = MonitorTask(messageType = data['messageType'], monitorType = data['content']['monitorTask']['monitorType'],
+#                                monitorId = data['content']['monitorTask']['monitorId'], pointId = data['content']['monitorTask']['pointId'],
+#                                taskId = data['content']['monitorTask']['taskId'])
+#         elif data['content']['monitorTask']['monitorType'] == 3:
+#             task = MonitorTask(messageType=data['messageType'], monitorType=data['content']['monitorTask']['monitorType'],
+#                                monitorId=data['content']['monitorTask']['monitorId'], pointId=data['content']['monitorTask']['pointId'],
+#                                taskId=data['content']['monitorTask']['taskId'], monitorPeriod = data['content']['monitorTask']['monitorPeriod'],
+#                                monitorFrequency = data['content']['monitorTask']['monitorRate'])
+#
+#         db.write(data['messageType'], task.getTaskDict())
+#         task.execute(db)
 
 
 
@@ -147,3 +156,10 @@ for data in fileData:
 #             json.dump(body.decode('utf-8'), f)
 #
 # do()
+
+
+from mq import ExampleConsumer
+dict = {}
+dict['video_dir'] = 'video/'
+mq = ExampleConsumer
+mq.monitor()。
